@@ -1,5 +1,5 @@
 ########################
-# Our Imports
+# Imports
 ########################
 
 import math
@@ -17,19 +17,31 @@ import os
 # Imports
 ########################
 
-def ensure_path_exists(file_path):
+########################
+# Functions
+########################
 
-    directory = os.path.dirname(file_path)
+def ensure_path_exists(_directory):
 
-    if not os.path.exists(directory):
+    if not os.path.exists(_directory):
 
-        os.makedirs(directory)
+        print("\n------ ATTENTION, PLEASE READ! ------ \n")
+
+        print("Folder does not exist, creating folder for simulation data...\n")
+
+        os.makedirs(_directory)
+
+        
+        print("Sorry, I set up the git so that the sim data is one directory upwards from the files itself!\n")
+        print("If the directory is created in a folder that you you would prefer not to, just press 'CTRL + C' to stop the current simulation and delete the folder at:\n" + _directory + "\n")
+        print("After that move the 'code_simulation.py' into an additional folder in the directory it is currently in or ask me about it!\n")
+        print("------ ATTENTION, PLEASE READ FROM THE BEGINING! ------ \n")
 
 def save_data(_file_paths, _data):
 
-
     ensure_path_exists(file_paths["directory"])
-
+    
+    print("Saving data...")
     # Save data
     with open(_file_paths["brains"], 'wb') as file:
         pickle.dump(data["brains"], file)
@@ -49,6 +61,8 @@ def save_data(_file_paths, _data):
 
     with open(_file_paths["apple_positions"], 'wb') as file6:
         pickle.dump(data["apple_positions"], file6)
+
+    print("Savind data finished. You can now execute the visualisation!\n")
 
 
 def turn(o_steer, st_incr):
@@ -242,6 +256,10 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
                     _food_area_positions[agent][area][4]  -= 1
 
 ########################
+# Functions
+########################
+
+########################
 # Variables
 ########################
 
@@ -283,9 +301,10 @@ dev_area_size = 10
 # Variables
 ########################
 
+########################
+# Initialisation
+########################
 
-
-# initialisation
 all_scores = np.zeros(shape=(generations, nagents))
 all_brains = []  # best brain of each generation
 all_positions = []  # to store positions of the best agent of each generation
@@ -323,19 +342,33 @@ metadata = {
     "MaxIniBrainValue": max_ini_brain_value
 }
 
-output_dir = "results/"
+# Get the directory of the current Python file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the folder one directory upwards
+output_dir = os.path.abspath(os.path.join(current_dir, '..', 'simulation_data'))
 
 file_paths = {
     "directory": output_dir,
-    "brains": output_dir + "brains.pkl",
-    "scores": output_dir + "scores.pkl",
-    "metadata": output_dir + "metadata.pkl",
-    "positions": output_dir + "positions.pkl",
-    "food_area_positions": output_dir + "food_area_positions.pkl",
-    "apple_positions": output_dir + "apple_positions.pkl"
+    "brains": output_dir + "/brains.pkl",
+    "scores": output_dir + "/scores.pkl",
+    "metadata": output_dir + "/metadata.pkl",
+    "positions": output_dir + "/positions.pkl",
+    "food_area_positions": output_dir + "/food_area_positions.pkl",
+    "apple_positions": output_dir + "/apple_positions.pkl"
 }
 
-# calculation
+ensure_path_exists(file_paths["directory"])
+
+########################
+# Initialisation
+########################
+
+
+########################
+# Calculation
+########################
+
 for igen in range(generations):
     print("Generation: ", igen)
     x_ini_r = np.full(fill_value=rng.uniform(low=0, high=world_length, size=1), shape=n_headini_r)
@@ -424,7 +457,7 @@ for igen in range(generations):
             inputs[agents_ingame, 0, 1] = (both_inputs[:, 1] % (2 * math.pi)) / (2 * math.pi)
             
             if():
-                
+
                 inputs[agents_ingame, 0, 2] = 0
             
             else:
@@ -507,13 +540,21 @@ for igen in range(generations):
     print(score_av)
     print(score_max)
 
+
+
 toc = time.perf_counter()
 print(f"Simulation executed in {toc - tic:0.4f} seconds")
 print(all_scores.mean(axis=1))
 print(all_scores.max(axis=1))
 
-# Prepare data for saving 
+########################
+# Calculation
+########################
 
+########################
+# Saving Data
+########################
+# Prepare data for saving 
 data = {
     "brains": all_brains,
     "scores": all_scores,
@@ -525,3 +566,7 @@ data = {
 
 # Save data
 save_data(file_paths, data)
+
+########################
+# Saving Data
+########################

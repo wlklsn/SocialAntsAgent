@@ -1,6 +1,10 @@
 # Own Folders
 idk/
 testing_code/
+simulation_data/
+
+# video files
+*.mp4
 
 
 

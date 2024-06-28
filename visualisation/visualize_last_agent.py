@@ -1,21 +1,63 @@
+########################
+# Imports
+########################
+
 import cv2
 import numpy as np
 import pickle
+import os
+
+########################
+# Imports
+########################
+
+########################
+# Functions
+########################
+
+def ensure_path_exists(_directory):
+
+    if not os.path.exists(_directory):
+
+        print("\n------ ATTENTION, PLEASE READ! ------ \n")
+
+        print("Folder does not exist, creating folder...\n" + _directory + "\n")
+
+        os.makedirs(_directory)
+
+        print("Folder created, please move the simulation data into this folder: " + _directory + "\n")
+        print("(Sorry, I set up the git so that the sim data is one directory upwards from the files itself!")
+        print("If the directory is created in a folder that you you would prefer not to, just delete it and nest the 'visualize_last_agent.py' into an additional folder or ask me!)\n")
+        print("------ ATTENTION, PLEASE READ FROM THE BEGINING! ------ \n")
+        exit(0)
+
+########################
+# Functions
+########################
+
+########################
+# Variables
+########################
 
 # Boolean which code to simulate
-
 plot_our_code = True
 
-output_dir = "results/"
+# Get the directory of the current Python file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the folder one directory upwards
+output_dir = os.path.abspath(os.path.join(current_dir, '..', 'simulation_data'))
+
+ensure_path_exists(output_dir)
 
 file_paths = {
     "directory": output_dir,
-    "brains": output_dir + "brains.pkl",
-    "scores": output_dir + "scores.pkl",
-    "metadata": output_dir + "metadata.pkl",
-    "positions": output_dir + "positions.pkl",
-    "food_area_positions": output_dir + "food_area_positions.pkl",
-    "apple_positions": output_dir + "apple_positions.pkl"
+    "brains": output_dir + "/brains.pkl",
+    "scores": output_dir + "/scores.pkl",
+    "metadata": output_dir + "/metadata.pkl",
+    "positions": output_dir + "/positions.pkl",
+    "food_area_positions": output_dir + "/food_area_positions.pkl",
+    "apple_positions": output_dir + "/apple_positions.pkl"
 }
 
 if plot_our_code:
@@ -38,17 +80,6 @@ with open(file_paths["positions"], 'rb') as file:
 
 
 
-################ TESTING ##################
-
-
-
-################ TESTING ##################
-
-
-################ Variables ##################
-
-
-
 # Define arena and apple area coordinates
 arena_bottom_left = (0, 0)
 arena_top_right = (600, 600)
@@ -68,10 +99,15 @@ green = (0, 255, 0)
 black = (0, 0, 0)
 white = (255, 255, 255)
 
-################ TESTING ##################
+########################
+# Variables
+########################
+
+
+################ TESTING #################
 
 # Define the video output file path
-video_output = "simulations/test/agent_path_and_apple_collection.mp4"
+video_output = "agent_path_and_apple_collection.mp4"
 
 # Create video writer object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -85,7 +121,6 @@ if plot_our_code:
     last_gen_arena = apple_areas_info[-1]
     last_gen_apples = all_apple_positions[-1]
 
-################ TESTING #################
 
 #print(len(last_gen_apples))
 
