@@ -6,26 +6,34 @@ import pickle
 
 plot_our_code = True
 
+output_dir = "results/"
+
+file_paths = {
+    "directory": output_dir,
+    "brains": output_dir + "brains.pkl",
+    "scores": output_dir + "scores.pkl",
+    "metadata": output_dir + "metadata.pkl",
+    "positions": output_dir + "positions.pkl",
+    "food_area_positions": output_dir + "food_area_positions.pkl",
+    "apple_positions": output_dir + "apple_positions.pkl"
+}
+
 if plot_our_code:
-    # Define the file paths
-    positions_file = "simulations/test/positions.pkl"
-    food_areas_positions_file = "simulations/test/food_area_positions.pkl"
-    apples_positions_file = "simulations/test/apple_positions.pkl"
 
     # Load the apple area centers and box sizes
-    with open(food_areas_positions_file, 'rb') as file:
+    with open(file_paths["food_area_positions"], 'rb') as file:
         apple_areas_info = pickle.load(file)
 
     # Load the saved apple positions for the last generation and the best agent
-    with open(apples_positions_file, 'rb') as file:
+    with open(file_paths["apple_positions"], 'rb') as file:
         all_apple_positions = pickle.load(file)
 
 else: 
     # Define the file paths
-    positions_file = "simulations/test/code_basis_positions.pkl"
+    positions_file = "result/code_basis_positions.pkl"
 
 # Load the positions data
-with open(positions_file, 'rb') as file:
+with open(file_paths["positions"], 'rb') as file:
     all_positions = pickle.load(file)
 
 

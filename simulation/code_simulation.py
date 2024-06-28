@@ -47,7 +47,7 @@ def save_data(_file_paths, _data):
     with open(_file_paths["food_area_positions"], 'wb') as file5:
         pickle.dump(data["food_area_positions"], file5)
 
-    with open(_file_paths["apple_postions"], 'wb') as file6:
+    with open(_file_paths["apple_positions"], 'wb') as file6:
         pickle.dump(data["apple_positions"], file6)
 
 
@@ -248,7 +248,7 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
 tic = time.perf_counter()
 
 rng = np.random.default_rng()
-in_nodes = 2
+in_nodes = 3
 hid_nodes = 3
 out_nodes = 1
 # 10000
@@ -422,6 +422,14 @@ for igen in range(generations):
             # normalise and center the inputs (0: distance to closest wall; 1: angle to wall)
             inputs[agents_ingame, 0, 0] = both_inputs[:, 0] / max_dist
             inputs[agents_ingame, 0, 1] = (both_inputs[:, 1] % (2 * math.pi)) / (2 * math.pi)
+            
+            if():
+                
+                inputs[agents_ingame, 0, 2] = 0
+            
+            else:
+
+                inputs[agents_ingame,0,2] = 1
 
             # move / restric calculations to agents_ingame
             temp_h = expit(np.matmul(inputs[agents_ingame, :, :], weights_ih[agents_ingame, :, :]) + bias_h[agents_ingame, :, :])
