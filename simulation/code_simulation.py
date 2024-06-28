@@ -1,18 +1,55 @@
+########################
+# Our Imports
+########################
+
 import math
 import numpy as np
 import pickle
 from scipy.special import expit # type: ignore
 import time
 from smt.sampling_methods import LHS # type: ignore
-    
 
-##### QUESTIONS #####
-# 
-# 1)
-# In the igen loop, arent we overwriting the positions of the agents for the first headings?
-# In the end only the postions of the last heading iteration is staying, no?
-#
-##### QUESTIONS #####
+# Our Imports
+
+import os
+
+########################
+# Imports
+########################
+
+def ensure_path_exists(file_path):
+
+    directory = os.path.dirname(file_path)
+
+    if not os.path.exists(directory):
+
+        os.makedirs(directory)
+
+def save_data(_file_paths, _data):
+
+
+    ensure_path_exists(file_paths["directory"])
+
+    # Save data
+    with open(_file_paths["brains"], 'wb') as file:
+        pickle.dump(data["brains"], file)
+
+    with open(_file_paths["scores"], 'wb') as file2:
+        pickle.dump(data["scores"], file2)
+
+    with open(_file_paths["metadata"], 'wb') as file3:
+        pickle.dump(data["metadata"], file3)
+
+
+    with open(_file_paths["positions"], 'wb') as file4:
+        pickle.dump(data["positions"], file4)
+
+    with open(_file_paths["food_area_positions"], 'wb') as file5:
+        pickle.dump(data["food_area_positions"], file5)
+
+    with open(_file_paths["apple_postions"], 'wb') as file6:
+        pickle.dump(data["apple_positions"], file6)
+
 
 def turn(o_steer, st_incr):
     coef_steer = o_steer - 0.5
@@ -204,6 +241,10 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
 
                     _food_area_positions[agent][area][4]  -= 1
 
+########################
+# Variables
+########################
+
 tic = time.perf_counter()
 
 rng = np.random.default_rng()
@@ -224,9 +265,9 @@ arena_interval = world_length / arena_bins
 min_ini_brain_value = -50
 max_ini_brain_value = 50
 
-########################
+
 # New Values
-########################
+
 
 apple_points = 300
 apple_radius = 10
@@ -237,9 +278,12 @@ area_number = 2
 area_size = 75
 dev_area_size = 10
 
+
 ########################
-# New Values
+# Variables
 ########################
+
+
 
 # initialisation
 all_scores = np.zeros(shape=(generations, nagents))
@@ -279,15 +323,17 @@ metadata = {
     "MaxIniBrainValue": max_ini_brain_value
 }
 
-output_dir = "simulations/test/"
+output_dir = "results/"
 
-str_brains = output_dir + "brains.pkl"
-str_scores = output_dir + "scores.pkl"
-str_md = output_dir + "metadata.pkl"
-str_positions = output_dir + "positions.pkl"
-
-str_food_area_positions = output_dir + "food_area_positions.pkl"
-str_apple_positions = output_dir + "apple_positions.pkl"
+file_paths = {
+    "directory": output_dir,
+    "brains": output_dir + "brains.pkl",
+    "scores": output_dir + "scores.pkl",
+    "metadata": output_dir + "metadata.pkl",
+    "positions": output_dir + "positions.pkl",
+    "food_area_positions": output_dir + "food_area_positions.pkl",
+    "apple_positions": output_dir + "apple_positions.pkl"
+}
 
 # calculation
 for igen in range(generations):
@@ -458,23 +504,16 @@ print(f"Simulation executed in {toc - tic:0.4f} seconds")
 print(all_scores.mean(axis=1))
 print(all_scores.max(axis=1))
 
+# Prepare data for saving 
+
+data = {
+    "brains": all_brains,
+    "scores": all_scores,
+    "metadata": metadata,
+    "positions": all_positions,
+    "food_area_positions": all_food_area_positions,
+    "apple_positions":all_apples_positions
+}
+
 # Save data
-with open(str_brains, 'wb') as file:
-    pickle.dump(all_brains, file)
-
-with open(str_scores, 'wb') as file2:
-    pickle.dump(all_scores, file2)
-
-with open(str_md, 'wb') as file3:
-    pickle.dump(metadata, file3)
-
-
-with open(str_positions, 'wb') as file4:
-    pickle.dump(all_positions, file4)
-
-#TODO: edit visualize 
-with open(str_food_area_positions, 'wb') as file5:
-    pickle.dump(all_food_area_positions, file5)
-
-with open(str_apple_positions, 'wb') as file6:
-    pickle.dump(all_apples_positions, file6)
+save_data(file_paths, data)
