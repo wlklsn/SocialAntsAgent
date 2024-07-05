@@ -1,5 +1,5 @@
 ########################
-# Imports
+# Our Imports
 ########################
 
 import math
@@ -17,31 +17,19 @@ import os
 # Imports
 ########################
 
-########################
-# Functions
-########################
+def ensure_path_exists(file_path):
 
-def ensure_path_exists(_directory):
+    directory = os.path.dirname(file_path)
 
-    if not os.path.exists(_directory):
+    if not os.path.exists(directory):
 
-        print("\n------ ATTENTION, PLEASE READ! ------ \n")
-
-        print("Folder does not exist, creating folder for simulation data...\n")
-
-        os.makedirs(_directory)
-
-        
-        print("Sorry, I set up the git so that the sim data is one directory upwards from the files itself!\n")
-        print("If the directory is created in a folder that you you would prefer not to, just press 'CTRL + C' to stop the current simulation and delete the folder at:\n" + _directory + "\n")
-        print("After that move the 'code_simulation.py' into an additional folder in the directory it is currently in or ask me about it!\n")
-        print("------ ATTENTION, PLEASE READ FROM THE BEGINING! ------ \n")
+        os.makedirs(directory)
 
 def save_data(_file_paths, _data):
 
+
     ensure_path_exists(file_paths["directory"])
-    
-    print("Saving data...")
+
     # Save data
     with open(_file_paths["brains"], 'wb') as file:
         pickle.dump(data["brains"], file)
@@ -61,8 +49,6 @@ def save_data(_file_paths, _data):
 
     with open(_file_paths["apple_positions"], 'wb') as file6:
         pickle.dump(data["apple_positions"], file6)
-
-    print("Savind data finished. You can now execute the visualisation!\n")
 
 
 def turn(o_steer, st_incr):
@@ -156,6 +142,10 @@ def is_valid_area(_occupied_area, _new_bottom_left, _new_top_right, _world_size,
             
 
     return True
+
+
+
+
 
 #TODO: Check first if food areas will take too much space
 def generate_food_area(_world_size, _area_number, _area_size, _dev_area_size, _max_apples):
@@ -255,10 +245,20 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
 
                     _food_area_positions[agent][area][4]  -= 1
 
-########################
-# Functions
-########################
 
+
+def is_inside_vectorized(x, y, food_areas):
+    # Initialize a boolean array to keep track of agents inside any food area
+    inside = np.zeros((x.size, food_areas.shape[1]), dtype=bool)
+# Existing logic in is_inside_vectorized function
+    for i in range(food_areas.shape[1]):
+        x_min, y_min, x_max, y_max = food_areas[:, i, :4].T
+      
+        inside[:, i] = (x >= x_min) & (x <= x_max) & (y >= y_min) & (y <= y_max)
+
+# If the agent is inside any food area, set the corresponding entry to True
+    return inside.any(axis=1).astype(int)
+    
 ########################
 # Variables
 ########################
@@ -270,7 +270,7 @@ in_nodes = 3
 hid_nodes = 3
 out_nodes = 1
 # 10000
-nagents = 10000
+nagents = 1000
 agent_life = 50
 # 20 gens
 generations = 20
@@ -301,10 +301,9 @@ dev_area_size = 10
 # Variables
 ########################
 
-########################
-# Initialisation
-########################
 
+
+# initialisation
 all_scores = np.zeros(shape=(generations, nagents))
 all_brains = []  # best brain of each generation
 all_positions = []  # to store positions of the best agent of each generation
@@ -342,33 +341,19 @@ metadata = {
     "MaxIniBrainValue": max_ini_brain_value
 }
 
-# Get the directory of the current Python file
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Construct the path to the folder one directory upwards
-output_dir = os.path.abspath(os.path.join(current_dir, '..', 'simulation_data'))
+output_dir = "results/"
 
 file_paths = {
     "directory": output_dir,
-    "brains": output_dir + "/brains.pkl",
-    "scores": output_dir + "/scores.pkl",
-    "metadata": output_dir + "/metadata.pkl",
-    "positions": output_dir + "/positions.pkl",
-    "food_area_positions": output_dir + "/food_area_positions.pkl",
-    "apple_positions": output_dir + "/apple_positions.pkl"
+    "brains": output_dir + "brains.pkl",
+    "scores": output_dir + "scores.pkl",
+    "metadata": output_dir + "metadata.pkl",
+    "positions": output_dir + "positions.pkl",
+    "food_area_positions": output_dir + "food_area_positions.pkl",
+    "apple_positions": output_dir + "apple_positions.pkl"
 }
 
-ensure_path_exists(file_paths["directory"])
-
-########################
-# Initialisation
-########################
-
-
-########################
-# Calculation
-########################
-
+# calculation
 for igen in range(generations):
     print("Generation: ", igen)
     x_ini_r = np.full(fill_value=rng.uniform(low=0, high=world_length, size=1), shape=n_headini_r)
@@ -455,15 +440,9 @@ for igen in range(generations):
             # normalise and center the inputs (0: distance to closest wall; 1: angle to wall)
             inputs[agents_ingame, 0, 0] = both_inputs[:, 0] / max_dist
             inputs[agents_ingame, 0, 1] = (both_inputs[:, 1] % (2 * math.pi)) / (2 * math.pi)
+            inputs[agents_ingame, 0, 2] = is_inside_vectorized(x[agents_ingame], y[agents_ingame], food_area_positions[agents_ingame])
             
-            if():
-
-                inputs[agents_ingame, 0, 2] = 0
             
-            else:
-
-                inputs[agents_ingame,0,2] = 1
-
             # move / restric calculations to agents_ingame
             temp_h = expit(np.matmul(inputs[agents_ingame, :, :], weights_ih[agents_ingame, :, :]) + bias_h[agents_ingame, :, :])
             temp_o = expit(np.matmul(temp_h, weights_ho[agents_ingame, :, :]) + bias_o[agents_ingame, :, :])
@@ -540,21 +519,13 @@ for igen in range(generations):
     print(score_av)
     print(score_max)
 
-
-
 toc = time.perf_counter()
 print(f"Simulation executed in {toc - tic:0.4f} seconds")
 print(all_scores.mean(axis=1))
 print(all_scores.max(axis=1))
 
-########################
-# Calculation
-########################
-
-########################
-# Saving Data
-########################
 # Prepare data for saving 
+
 data = {
     "brains": all_brains,
     "scores": all_scores,
@@ -566,7 +537,3 @@ data = {
 
 # Save data
 save_data(file_paths, data)
-
-########################
-# Saving Data
-########################
