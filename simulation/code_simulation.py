@@ -244,7 +244,7 @@ rng = np.random.default_rng()
 in_nodes = 2
 hid_nodes = 3
 out_nodes = 1
-nagents = 1000         # default: 10000
+nagents = 10000         # default: 10000
 agent_life = 50
 generations = 20        # default: 20 gens
 speed = 50
@@ -379,7 +379,23 @@ for igen in range(generations):
             
             #store positions of apples
             if iic == n_headini - 1:
+                
+                """
+                # Iterate only over active agents
+                active_agent_indices = np.where(agents_ingame)[0]
 
+                # Extract the count of apples remaining for all active agents and areas
+                current_apples = food_area_positions[active_agent_indices, :, 4].astype(int) - 1
+
+                # Ensure that current_apples shape matches for broadcasting
+                # Reshape current_apples to have the same leading dimensions as apple_positions
+                reshaped_current_apples = current_apples[:, :, np.newaxis]
+
+                # Update apple positions for all active agents and areas
+                for i, agent_idx in enumerate(active_agent_indices):
+                    apple_positions[agent_idx, istep-1, :, :] = apple_ini[np.arange(area_number), reshaped_current_apples[i].squeeze(), :]
+
+                """
                 # Iterate only over active agents
                 active_agent_indices = np.where(agents_ingame)[0]
 
@@ -393,7 +409,7 @@ for igen in range(generations):
                         current_apple = int(food_area_positions[agent_idx, area_idx, 4]) - 1 
  
                         apple_positions[agent_idx, istep-1, area_idx, :] = apple_ini[area_idx, current_apple, :]
-
+                
             # set the angles in [-pi, pi]
             headings[agents_ingame] = np.arctan2(np.sin(headings[agents_ingame]),
                                                  np.cos(headings[agents_ingame]))
