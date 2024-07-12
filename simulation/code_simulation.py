@@ -183,7 +183,7 @@ def generate_food_area(_world_size, _area_number, _area_size, _dev_area_size, _m
 
             area_positions[area][4] = numb_apples
             #area_positions[area][4] = 1
-            
+
             attempts = 0
             area += 1
 
@@ -244,11 +244,9 @@ rng = np.random.default_rng()
 in_nodes = 2
 hid_nodes = 3
 out_nodes = 1
-# 10000
-nagents = 10000
+nagents = 1000         # default: 10000
 agent_life = 50
-# 20 gens
-generations = 20
+generations = 30        # default: 20 gens
 speed = 50
 angle_increment = 6.28  # twice the actual maximum angle turned (see func turn())
 world_length = 600
@@ -375,16 +373,14 @@ for igen in range(generations):
         n_ingame = agents_ingame.sum()
 
         while n_ingame > 0 and istep <= agent_life:
-
-            #apple_positions = np.ones((_nagents, _agent_life,_arena_number, 2)) * -1
-            #area_positions = np.zeros((_nagents, _area_number, 5))
-            #collect_apple(_food_area_positions, _area_number, _apple_info, _agents_x, _agents_y, _agents_ingame, _apple_radius, _scores)
-
+            
+            
             collect_apple(food_area_positions, area_number, apple_ini, x, y, agents_ingame, apple_radius, scores, apple_points)
             
             #store positions of apples
             if iic == n_headini - 1:
 
+                # TODO: Das sieht max scheiße aus
                 apples_ingame = food_area_positions[agents_ingame]
 
                 current_apple = apples_ingame[:,:,4]
@@ -409,7 +405,6 @@ for igen in range(generations):
                             else:
                                 apple_positions[i, istep - 1, arena, 0] = -1
                                 apple_positions[i, istep - 1, arena, 1] = -1
-
 
             # set the angles in [-pi, pi]
             headings[agents_ingame] = np.arctan2(np.sin(headings[agents_ingame]),
