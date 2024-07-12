@@ -246,7 +246,7 @@ hid_nodes = 3
 out_nodes = 1
 nagents = 1000         # default: 10000
 agent_life = 50
-generations = 30        # default: 20 gens
+generations = 20        # default: 20 gens
 speed = 50
 angle_increment = 6.28  # twice the actual maximum angle turned (see func turn())
 world_length = 600
@@ -258,7 +258,6 @@ max_ini_brain_value = 50
 
 
 # New Values
-
 
 apple_points = 300
 apple_radius = 10
@@ -349,6 +348,9 @@ for igen in range(generations):
 
     # initilize apple parameters
     apple_ini = generate_apples(area_number, food_area_ini, max_apples)
+
+    # to store positions of each apple at each step
+    apple_positions = np.ones((nagents, agent_life, area_number, 2)) * -1
       
 
     for iic in range(n_headini):
@@ -366,8 +368,6 @@ for igen in range(generations):
         # to store positions of each food_area at each step
         food_area_positions = np.tile(food_area_ini, (nagents, 1, 1))
 
-        # to store positions of each apple at each step
-        apple_positions = np.ones((nagents, agent_life, max_apples, 2)) * -1
 
         istep = 1
         n_ingame = agents_ingame.sum()
@@ -380,31 +380,19 @@ for igen in range(generations):
             #store positions of apples
             if iic == n_headini - 1:
 
-                # TODO: Das sieht max scheiße aus
-                apples_ingame = food_area_positions[agents_ingame]
+                # Iterate only over active agents
+                active_agent_indices = np.where(agents_ingame)[0]
 
-                current_apple = apples_ingame[:,:,4]
+                # Iterate through each agent
+                for agent_idx in active_agent_indices:
 
-                current_apple = current_apple.astype(int) - 1
-
-                valid_mask = current_apple >= 0
-
-                for arena in range(area_number):
-
-                    for i in range(current_apple.shape[0]):
-                        if agents_ingame[i]:
-
-                            if valid_mask[i, arena]:
-
-                                temp1 = apple_ini[arena, current_apple[i, arena], 0]
-                                apple_positions[i, istep - 1, arena, 0] = temp1
-
-                                temp2 = apple_ini[arena, current_apple[i, arena], 1]
-                                apple_positions[i, istep - 1, arena, 1] = temp2
-
-                            else:
-                                apple_positions[i, istep - 1, arena, 0] = -1
-                                apple_positions[i, istep - 1, arena, 1] = -1
+                    # Iterate through each food area for the agent
+                    for area_idx in range(area_number):
+                        
+                        # Assuming the last value in the third dimension is the count of apples remaining
+                        current_apple = int(food_area_positions[agent_idx, area_idx, 4]) - 1 
+ 
+                        apple_positions[agent_idx, istep-1, area_idx, :] = apple_ini[area_idx, current_apple, :]
 
             # set the angles in [-pi, pi]
             headings[agents_ingame] = np.arctan2(np.sin(headings[agents_ingame]),
