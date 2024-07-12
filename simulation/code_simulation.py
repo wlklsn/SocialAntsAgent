@@ -58,7 +58,7 @@ def save_data(_file_paths, _data):
     with open(_file_paths["apple_positions"], 'wb') as file6:
         pickle.dump(_data["apple_positions"], file6)
 
-    print("Savind data finished. You can now execute the visualisation!\n")
+    print("Saving data finished. You can now execute the visualisation!\n")
 
 
 def turn(o_steer, st_incr):
@@ -154,8 +154,11 @@ def generate_food_area(_world_size, _area_number, _area_size, _dev_area_size, _m
     occupied_area = []
     area = 0
 
-    while area < _area_number:
+    attempts = 0
 
+    while area < _area_number and attempts < 1000:
+        attempts += 1
+        
         deviation = np.random.randint(0, _dev_area_size)
         
         bottom_left_x = np.random.randint((_world_size/_area_number) * area, (_world_size/_area_number) * (area + 1) - (_area_size + _dev_area_size))
@@ -166,9 +169,7 @@ def generate_food_area(_world_size, _area_number, _area_size, _dev_area_size, _m
 
         new_area = (bottom_left_x, bottom_left_y, top_right_x, top_right_y)
 
-        temp = is_valid_area(new_area, occupied_area)
-
-        if temp:
+        if is_valid_area(new_area, occupied_area):
             
             occupied_area.append(new_area)
 
@@ -182,7 +183,8 @@ def generate_food_area(_world_size, _area_number, _area_size, _dev_area_size, _m
 
             area_positions[area][4] = numb_apples
             #area_positions[area][4] = 1
-
+            
+            attempts = 0
             area += 1
 
     return area_positions
