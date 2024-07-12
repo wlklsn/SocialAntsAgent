@@ -5,9 +5,9 @@
 import math
 import numpy as np
 import pickle
-from scipy.special import expit # type: ignore
+from scipy.special import expit 
 import time
-from smt.sampling_methods import LHS # type: ignore
+from smt.sampling_methods import LHS 
 
 # Our Imports
 
@@ -137,34 +137,13 @@ def is_valid_area(_new_area, _occupied_area):
     Returns:
     bool: True if the new rectangle does not intersect with any old rectangles, False otherwise.
     """
-    def is_intersecting(_area1, _area2):
-        """
-        Check if two rectangles intersect.
+    new_x_bl, new_y_bl, new_x_tr, new_y_tr = _new_area
 
-        Parameters:
-        rect1 (tuple): A tuple of four integers (x1, y1, x2, y2) representing the first rectangle.
-        rect2 (tuple): A tuple of four integers (x1, y1, x2, y2) representing the second rectangle.
+    for old_x_bl, old_y_bl, old_x_tr, old_y_tr in _occupied_area:
+        # Check if the new rectangle does not intersect with the old rectangle
+        if not (new_x_tr <= old_x_bl or new_x_bl >= old_x_tr or new_y_tr <= old_y_bl or new_y_bl >= old_y_tr):
+            return False
 
-        Returns:
-        bool: True if the rectangles intersect, False otherwise.
-        """
-        x1_1, y1_1, x2_1, y2_1 = _area1
-        x1_2, y1_2, x2_2, y2_2 = _area2
-        
-        # If one rectangle is on the left side of the other
-        if x1_1 >= x2_2 or x1_2 >= x2_1:
-            return False
-        
-        # If one rectangle is above the other
-        if y1_1 >= y2_2 or y1_2 >= y2_1:
-            return False
-        
-        return True
-
-    for old_rect in _occupied_area:
-        if is_intersecting(_new_area, old_rect):
-            return False
-    
     return True
 
 #TODO: Check first if food areas will take too much space
@@ -234,7 +213,7 @@ def generate_apples(_area_number, _food_area_ini, _max_apples):
 
     return apple_ini
 
-def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _agents_y, _agents_ingame, _apple_radius, _scores, _igen, _iic, _n_headini):
+def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _agents_y, _agents_ingame, _apple_radius, _scores, _apple_points):
     
     for agent in np.where(_agents_ingame)[0]:
                 
@@ -249,18 +228,8 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
                 apple_y = _apple_ini[area][current_apple][1]
 
                 if np.linalg.norm(np.array([apple_x, apple_y]) - np.array([_agents_x[agent], _agents_y[agent]])) < _apple_radius:
-                    
-                    #if igen == 9 & _iic == _n_headini -1:
 
-                        #print()
-                        #print("ESSEN")
-                        #print("apple_X: ", apple_x)
-                        #print("apple_y: ", apple_y)      
-                        #print("agent_x: ", _agents_x[agent])
-                        #print("agent_y: ", _agents_y[agent])
-
-                    _scores[agent] += apple_points
-
+                    _scores[agent] += _apple_points
                     _food_area_positions[agent][area][4]  -= 1
 
 ########################
@@ -409,7 +378,7 @@ for igen in range(generations):
             #area_positions = np.zeros((_nagents, _area_number, 5))
             #collect_apple(_food_area_positions, _area_number, _apple_info, _agents_x, _agents_y, _agents_ingame, _apple_radius, _scores)
 
-            collect_apple(food_area_positions, area_number, apple_ini, x, y, agents_ingame, apple_radius, scores, igen, iic, n_headini)
+            collect_apple(food_area_positions, area_number, apple_ini, x, y, agents_ingame, apple_radius, scores, apple_points)
             
             #store positions of apples
             if iic == n_headini - 1:
@@ -496,10 +465,13 @@ for igen in range(generations):
     score_max = scores.max()
     score_av = scores.mean()
 
-    ###############################################
-    # TODO: Add catch function for divide by zero #
-    ###############################################
-    fitness = scores / score_sum
+    if(score_sum != 0):
+
+        fitness = scores / score_sum
+    else:
+
+        fitness = np.zeros_like(scores)
+
     new_pop = rng.choice(a=range(nagents), size=nagents, replace=True, p=fitness)
     all_scores[igen, :] = scores
     ibest = scores.argmax()
