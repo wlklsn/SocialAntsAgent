@@ -14,10 +14,6 @@ from smt.sampling_methods import LHS # type: ignore
 import os
 
 ########################
-# Imports
-########################
-
-########################
 # Functions
 ########################
 
@@ -130,31 +126,45 @@ def generate_brain_params(_nagents, _in_nodes, _hid_nodes, _out_nodes, _low_limi
             tbh.reshape((_nagents, 1, _hid_nodes)), tbo.reshape((_nagents, 1, _out_nodes))]
     return output
 
-def is_valid_area(_occupied_area, _new_bottom_left, _new_top_right, _world_size, _area_size, _dev_area_size):
+def is_valid_area(_new_area, _occupied_area):
+    """
+    Check if the new rectangle intersects with any of the old rectangles.
 
-    new_x_bl, new_y_bl = _new_bottom_left
+    Parameters:
+    new_area (tuple): A tuple of four integers (x1, y1, x2, y2) representing the new rectangle.
+    occupied_area (list): A list of tuples, each containing four integers (x1, y1, x2, y2) representing the old rectangles.
 
-    new_x_tr, new_y_tr = _new_top_right
+    Returns:
+    bool: True if the new rectangle does not intersect with any old rectangles, False otherwise.
+    """
+    def is_intersecting(_area1, _area2):
+        """
+        Check if two rectangles intersect.
 
-    if new_x_bl <= 0 and new_y_bl <= 0 and new_x_tr >= _area_size and new_y_tr >= _world_size:
+        Parameters:
+        rect1 (tuple): A tuple of four integers (x1, y1, x2, y2) representing the first rectangle.
+        rect2 (tuple): A tuple of four integers (x1, y1, x2, y2) representing the second rectangle.
 
-        return False
-
-    if len(_occupied_area) == 0:
-
+        Returns:
+        bool: True if the rectangles intersect, False otherwise.
+        """
+        x1_1, y1_1, x2_1, y2_1 = _area1
+        x1_2, y1_2, x2_2, y2_2 = _area2
+        
+        # If one rectangle is on the left side of the other
+        if x1_1 >= x2_2 or x1_2 >= x2_1:
+            return False
+        
+        # If one rectangle is above the other
+        if y1_1 >= y2_2 or y1_2 >= y2_1:
+            return False
+        
         return True
 
-    for (bl, tr) in _occupied_area:
-
-        x_bl, y_bl = bl
-
-        if new_x_bl >= x_bl - (_area_size + _dev_area_size) and new_x_bl <= x_bl + (_area_size + _dev_area_size):
-
-            if new_y_bl >= y_bl - (_area_size + _dev_area_size) and new_y_bl <= y_bl + (_area_size + _dev_area_size):
-
-                return False
-            
-
+    for old_rect in _occupied_area:
+        if is_intersecting(_new_area, old_rect):
+            return False
+    
     return True
 
 #TODO: Check first if food areas will take too much space
@@ -172,18 +182,16 @@ def generate_food_area(_world_size, _area_number, _area_size, _dev_area_size, _m
         bottom_left_x = np.random.randint((_world_size/_area_number) * area, (_world_size/_area_number) * (area + 1) - (_area_size + _dev_area_size))
         bottom_left_y = np.random.randint((_world_size/_area_number) * area, (_world_size/_area_number) * (area + 1) - (_area_size + _dev_area_size))
 
-        bottom_left = (bottom_left_x, bottom_left_y)
-
         top_right_x = bottom_left_x + _area_size + deviation
         top_right_y = bottom_left_y + _area_size + deviation
 
-        top_right = (top_right_x, top_right_y)
+        new_area = (bottom_left_x, bottom_left_y, top_right_x, top_right_y)
 
-        temp = is_valid_area(occupied_area, bottom_left, top_right, _world_size, _area_size, _dev_area_size)
+        temp = is_valid_area(new_area, occupied_area)
 
         if temp:
             
-            occupied_area.append((bottom_left, top_right))
+            occupied_area.append(new_area)
 
             area_positions[area][0] = bottom_left_x
             area_positions[area][1] = bottom_left_y
@@ -256,10 +264,6 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
                     _food_area_positions[agent][area][4]  -= 1
 
 ########################
-# Functions
-########################
-
-########################
 # Variables
 ########################
 
@@ -295,11 +299,6 @@ area_number = 2
 
 area_size = 75
 dev_area_size = 10
-
-
-########################
-# Variables
-########################
 
 ########################
 # Initialisation
@@ -361,11 +360,6 @@ file_paths = {
 ensure_path_exists(file_paths["directory"])
 
 ########################
-# Initialisation
-########################
-
-
-########################
 # Calculation
 ########################
 
@@ -381,13 +375,12 @@ for igen in range(generations):
     # to store positions of each agent at each step
     positions = np.zeros((nagents, agent_life, 2)) 
 
-    # to store positions of each food_area at each step
+    # initilize food area parameters
     food_area_ini = generate_food_area(world_length, area_number, area_size, dev_area_size, max_apples)
-    food_area_positions = np.tile(food_area_ini, (nagents, 1, 1))
 
-    # to store positions of each apple at each step
+    # initilize apple parameters
     apple_ini = generate_apples(area_number, food_area_ini, max_apples)
-    apple_positions = np.ones((nagents, agent_life, max_apples, 2)) * -1  
+      
 
     for iic in range(n_headini):
         #print(iic)
@@ -401,8 +394,11 @@ for igen in range(generations):
         y_bin = np.floor(y / arena_interval).astype(int)
         exploration_mat[:, y_bin, x_bin] = 1
 
-        
-        
+        # to store positions of each food_area at each step
+        food_area_positions = np.tile(food_area_ini, (nagents, 1, 1))
+
+        # to store positions of each apple at each step
+        apple_positions = np.ones((nagents, agent_life, max_apples, 2)) * -1
 
         istep = 1
         n_ingame = agents_ingame.sum()
@@ -412,8 +408,6 @@ for igen in range(generations):
             #apple_positions = np.ones((_nagents, _agent_life,_arena_number, 2)) * -1
             #area_positions = np.zeros((_nagents, _area_number, 5))
             #collect_apple(_food_area_positions, _area_number, _apple_info, _agents_x, _agents_y, _agents_ingame, _apple_radius, _scores)
-
-            
 
             collect_apple(food_area_positions, area_number, apple_ini, x, y, agents_ingame, apple_radius, scores, igen, iic, n_headini)
             
@@ -540,10 +534,6 @@ print(all_scores.mean(axis=1))
 print(all_scores.max(axis=1))
 
 ########################
-# Calculation
-########################
-
-########################
 # Saving Data
 ########################
 # Prepare data for saving 
@@ -558,7 +548,3 @@ data = {
 
 # Save data
 save_data(file_paths, data)
-
-########################
-# Saving Data
-########################
