@@ -266,7 +266,7 @@ def is_inside_vectorized(x, y, food_areas):
 tic = time.perf_counter()
 
 rng = np.random.default_rng()
-in_nodes = 2
+in_nodes = 3
 hid_nodes = 3
 out_nodes = 1
 # 10000
