@@ -17,14 +17,21 @@ import os
 # Functions
 ########################
 
-def ensure_path_exists(file_path):
+def ensure_path_exists(_directory):
 
+    if not os.path.exists(_directory):
 
-    directory = os.path.dirname(file_path)
+        print("\n------ ATTENTION, PLEASE READ! ------ \n")
 
-    if not os.path.exists(directory):
+        print("Folder does not exist, creating folder for simulation data...\n")
 
-        os.makedirs(directory)
+        os.makedirs(_directory)
+
+        
+        print("Sorry, I set up the git so that the sim data is one directory upwards from the files itself!\n")
+        print("If the directory is created in a folder that you you would prefer not to, just press 'CTRL + C' to stop the current simulation and delete the folder at:\n" + _directory + "\n")
+        print("After that move the 'code_simulation.py' into an additional folder in the directory it is currently in or ask me about it!\n")
+        print("------ ATTENTION, PLEASE READ FROM THE BEGINING! ------ \n")
 
 def save_data(_file_paths, _data):
 
@@ -238,13 +245,13 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
 def is_inside_vectorized(x, y, food_areas):
     # Initialize a boolean array to keep track of agents inside any food area
     inside = np.zeros((x.size, food_areas.shape[1]), dtype=bool)
-# Existing logic in is_inside_vectorized function
+    # Existing logic in is_inside_vectorized function
     for i in range(food_areas.shape[1]):
         x_min, y_min, x_max, y_max = food_areas[:, i, :4].T
       
         inside[:, i] = (x >= x_min) & (x <= x_max) & (y >= y_min) & (y <= y_max)
 
-# If the agent is inside any food area, set the corresponding entry to True
+    # If the agent is inside any food area, set the corresponding entry to True
     return inside.any(axis=1).astype(int)
     
 ########################
@@ -312,7 +319,7 @@ x_ini_nofit = np.array([max_dist])
 y_ini_nofit = np.array([max_dist])
 
 metadata = {
-    "speed": max_speed,
+    "speed": speed,
     "worldSize": world_length,
     "totalPopulation": nagents,
     "genNb": generations,
@@ -323,16 +330,20 @@ metadata = {
     "MaxIniBrainValue": max_ini_brain_value
 }
 
-output_dir = "results/"
+# Get the directory of the current Python file
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the folder one directory upwards
+output_dir = os.path.abspath(os.path.join(current_dir, '..', 'simulation_data'))
 
 file_paths = {
     "directory": output_dir,
-    "brains": output_dir + "brains.pkl",
-    "scores": output_dir + "scores.pkl",
-    "metadata": output_dir + "metadata.pkl",
-    "positions": output_dir + "positions.pkl",
-    "food_area_positions": output_dir + "food_area_positions.pkl",
-    "apple_positions": output_dir + "apple_positions.pkl"
+    "brains": output_dir + "/brains.pkl",
+    "scores": output_dir + "/scores.pkl",
+    "metadata": output_dir + "/metadata.pkl",
+    "positions": output_dir + "/positions.pkl",
+    "food_area_positions": output_dir + "/food_area_positions.pkl",
+    "apple_positions": output_dir + "/apple_positions.pkl"
 }
 
 ensure_path_exists(file_paths["directory"])
@@ -430,8 +441,7 @@ for igen in range(generations):
             inputs[agents_ingame, 0, 0] = both_inputs[:, 0] / max_dist
             inputs[agents_ingame, 0, 1] = (both_inputs[:, 1] % (2 * math.pi)) / (2 * math.pi)
             inputs[agents_ingame, 0, 2] = is_inside_vectorized(x[agents_ingame], y[agents_ingame], food_area_positions[agents_ingame])
-            
-            
+               
             # move / restric calculations to agents_ingame
             temp_h = expit(np.matmul(inputs[agents_ingame, :, :], weights_ih[agents_ingame, :, :]) + bias_h[agents_ingame, :, :])
             temp_o = expit(np.matmul(temp_h, weights_ho[agents_ingame, :, :]) + bias_o[agents_ingame, :, :])
@@ -445,7 +455,6 @@ for igen in range(generations):
             positions[agents_ingame, istep-1, 0] = x[agents_ingame]
             positions[agents_ingame, istep-1, 1] = y[agents_ingame]
 
-
             # evaluate score for each agent
             agents_ingame = (x <= world_length) & (x >= 0) & (y <= world_length) & (y >= 0)
 
@@ -453,23 +462,9 @@ for igen in range(generations):
             y_bin = find_bins(y[agents_ingame], arena_interval)
             exploration_mat[agents_ingame, y_bin, x_bin] = 1
 
-            # Check for apple collection and update scores
-            #for idx in np.where(agents_ingame)[0]:
-            #    for food_area in food_areas_data:
-            #        if food_area.collect_apple(x[idx], y[idx], apple_radius):
-            #            scores[idx] += apple_points  # Add points for collecting an apple
-            #            food_area.spawn_apple(rng)
-
             istep += 1
             n_ingame = agents_ingame.sum()
 
-
-        #if iic == n_headini - 1 and igen == 9:
-            #print()
-            #print("positions")
-            #print(positions)
-            #print()
-            #print(apple_positions)
 
         scores += (exploration_mat.sum(axis=1)).sum(axis=1)
 
