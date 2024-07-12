@@ -4,6 +4,7 @@ testing_code/
 simulation_data/
 simulation_data2/
 jupyter/
+.idea/
 # video files
 *.mp4
 
