@@ -35,28 +35,28 @@ def ensure_path_exists(_directory):
 
 def save_data(_file_paths, _data):
 
-    ensure_path_exists(file_paths["directory"])
+    ensure_path_exists(_file_paths["directory"])
     
     print("Saving data...")
     # Save data
     with open(_file_paths["brains"], 'wb') as file:
-        pickle.dump(data["brains"], file)
+        pickle.dump(_data["brains"], file)
 
     with open(_file_paths["scores"], 'wb') as file2:
-        pickle.dump(data["scores"], file2)
+        pickle.dump(_data["scores"], file2)
 
     with open(_file_paths["metadata"], 'wb') as file3:
-        pickle.dump(data["metadata"], file3)
+        pickle.dump(_data["metadata"], file3)
 
 
     with open(_file_paths["positions"], 'wb') as file4:
-        pickle.dump(data["positions"], file4)
+        pickle.dump(_data["positions"], file4)
 
     with open(_file_paths["food_area_positions"], 'wb') as file5:
-        pickle.dump(data["food_area_positions"], file5)
+        pickle.dump(_data["food_area_positions"], file5)
 
     with open(_file_paths["apple_positions"], 'wb') as file6:
-        pickle.dump(data["apple_positions"], file6)
+        pickle.dump(_data["apple_positions"], file6)
 
     print("Savind data finished. You can now execute the visualisation!\n")
 
