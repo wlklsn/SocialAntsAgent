@@ -51,10 +51,12 @@ def save_data(_file_paths, _data):
         pickle.dump(data["apple_positions"], file6)
 
 
-def turn(o_steer, st_incr):
+def turn_and_speed(o_steer, o_speed, st_incr, min_speed, max_speed):
+
     coef_steer = o_steer - 0.5
     dsteering = coef_steer * st_incr
-    return dsteering
+    speed = min_speed + (o_speed * (max_speed - min_speed))  # Normalize speed
+    return dsteering, speed
 
 
 def mutate(size_vec, _rng, prob_small=.33, prob_large=.01, sd_small=0.5, sd_large=5):
@@ -88,8 +90,18 @@ def input_closestwall(_x, _y, _headings, _world_length, n):
     closest_wall = dist_walls.argmin(axis=1).astype('int64')
     output[:, 0] = dist_walls[np.arange(n), closest_wall]
     output[:, 1] = angle_walls[np.arange(n), closest_wall]
+    
+    
 
     return output
+
+######################
+#speed output node
+######################
+
+
+
+
 
 
 def find_bins(_x, _arena_interval):
@@ -142,10 +154,6 @@ def is_valid_area(_occupied_area, _new_bottom_left, _new_top_right, _world_size,
             
 
     return True
-
-
-
-
 
 #TODO: Check first if food areas will take too much space
 def generate_food_area(_world_size, _area_number, _area_size, _dev_area_size, _max_apples):
@@ -268,13 +276,14 @@ tic = time.perf_counter()
 rng = np.random.default_rng()
 in_nodes = 3
 hid_nodes = 3
-out_nodes = 1
+out_nodes = 2
 # 10000
-nagents = 1000
+nagents = 10000
 agent_life = 50
 # 20 gens
 generations = 20
-speed = 50
+min_speed = 20
+max_speed = 100
 angle_increment = 6.28  # twice the actual maximum angle turned (see func turn())
 world_length = 600
 max_dist = world_length / 2
@@ -330,7 +339,7 @@ x_ini_nofit = np.array([max_dist])
 y_ini_nofit = np.array([max_dist])
 
 metadata = {
-    "speed": speed,
+    "speed": max_speed,
     "worldSize": world_length,
     "totalPopulation": nagents,
     "genNb": generations,
@@ -353,7 +362,17 @@ file_paths = {
     "apple_positions": output_dir + "apple_positions.pkl"
 }
 
-# calculation
+ensure_path_exists(file_paths["directory"])
+
+########################
+# Initialisation
+########################
+
+
+########################
+# Calculation
+########################
+
 for igen in range(generations):
     print("Generation: ", igen)
     x_ini_r = np.full(fill_value=rng.uniform(low=0, high=world_length, size=1), shape=n_headini_r)
@@ -447,7 +466,7 @@ for igen in range(generations):
             temp_h = expit(np.matmul(inputs[agents_ingame, :, :], weights_ih[agents_ingame, :, :]) + bias_h[agents_ingame, :, :])
             temp_o = expit(np.matmul(temp_h, weights_ho[agents_ingame, :, :]) + bias_o[agents_ingame, :, :])
 
-            delta_phi = turn(temp_o, angle_increment).reshape(n_ingame)
+            delta_phi, speed = turn_and_speed(temp_o[:,0 , 0],temp_o[:,0, 1], angle_increment, min_speed, max_speed)
             headings[agents_ingame] += delta_phi
             x[agents_ingame] += (speed * np.cos(headings[agents_ingame]))
             y[agents_ingame] += (speed * np.sin(headings[agents_ingame]))
@@ -488,6 +507,7 @@ for igen in range(generations):
     score_sum = scores.sum()
     score_max = scores.max()
     score_av = scores.mean()
+    
 
     ###############################################
     # TODO: Add catch function for divide by zero #
@@ -518,6 +538,7 @@ for igen in range(generations):
 
     print(score_av)
     print(score_max)
+    print()
 
 toc = time.perf_counter()
 print(f"Simulation executed in {toc - tic:0.4f} seconds")
