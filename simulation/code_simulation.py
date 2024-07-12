@@ -319,7 +319,8 @@ x_ini_nofit = np.array([max_dist])
 y_ini_nofit = np.array([max_dist])
 
 metadata = {
-    "speed": speed,
+    "maxSpeed": max_speed,
+    "minSpeed": min_speed,
     "worldSize": world_length,
     "totalPopulation": nagents,
     "genNb": generations,
