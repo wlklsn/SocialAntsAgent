@@ -60,19 +60,28 @@ def save_data(_file_paths, _data):
 
     print("Saving data finished. You can now execute the visualisation!\n")
 
-def turn_and_speed(o_steer, o_speed, st_incr, min_speed, max_speed):
 
-    coef_steer = o_steer - 0.5
-    dsteering = coef_steer * st_incr
+def turn_and_speed(o_steer, _max_kappa, o_speed, st_incr, min_speed, max_speed):
+    cur_kappas = o_steer*_max_kappa
+    dsteering = rng.vonmises(mu=0,kappa=cur_kappas) # one sample per cur_kappas items
     speed = min_speed + (o_speed * (max_speed - min_speed))  # Normalize speed
     return dsteering, speed
 
+def periodic_locations(_x, _arena_length):
+    # only works if _arena_length > maximum speed of agents
+    far_east = _x > _arena_length
+    far_west = _x < 0
+
+    _x[far_east] = _x[far_east] - _arena_length
+    _x[far_west] = _x[far_west] + _arena_length
+
+    return _x
 
 def mutate(size_vec, _rng, prob_small=.33, prob_large=.01, sd_small=0.5, sd_large=5):
-    small_mutations = np.multiply(_rng.choice(a=[0, 1], size=size_vec, replace=True, p=[1-prob_small, prob_small]),
-                _rng.normal(loc=0.0, scale=sd_small, size=size_vec))
-    large_mutations = np.multiply(_rng.choice(a=[0, 1], size=size_vec, replace=True, p=[1-prob_large, prob_large]),
-                _rng.normal(loc=0.0, scale=sd_large, size=size_vec))
+    small_mutations = np.multiply(_rng.choice(a=[0, 1], size=size_vec, replace=True, p=[1 - prob_small, prob_small]),
+                                  _rng.normal(loc=0.0, scale=sd_small, size=size_vec))
+    large_mutations = np.multiply(_rng.choice(a=[0, 1], size=size_vec, replace=True, p=[1 - prob_large, prob_large]),
+                                  _rng.normal(loc=0.0, scale=sd_large, size=size_vec))
     mutations_array = small_mutations + large_mutations
     return mutations_array
 
@@ -100,8 +109,6 @@ def input_closestwall(_x, _y, _headings, _world_length, n):
     output[:, 0] = dist_walls[np.arange(n), closest_wall]
     output[:, 1] = angle_walls[np.arange(n), closest_wall]
     
-    
-
     return output
 
 ######################
@@ -241,7 +248,6 @@ def collect_apple(_food_area_positions, _area_number, _apple_ini, _agents_x, _ag
                     _food_area_positions[agent][area][4]  -= 1
 
 
-
 def is_inside_vectorized(x, y, food_areas):
     # Initialize a boolean array to keep track of agents inside any food area
     inside = np.zeros((x.size, food_areas.shape[1]), dtype=bool)
@@ -261,14 +267,15 @@ def is_inside_vectorized(x, y, food_areas):
 tic = time.perf_counter()
 
 rng = np.random.default_rng()
-in_nodes = 3
+in_nodes = 1
 hid_nodes = 3
 out_nodes = 2
-nagents = 1000         # default: 10000
+nagents = 1000       # default: 10000
 agent_life = 50
 generations = 20        # default: 20 gens
 min_speed = 20
-max_speed = 100
+max_speed = 150
+max_kappa = 10
 angle_increment = 6.28  # twice the actual maximum angle turned (see func turn())
 world_length = 600
 max_dist = world_length / 2
@@ -276,14 +283,15 @@ arena_bins = 20
 arena_interval = world_length / arena_bins
 min_ini_brain_value = -50
 max_ini_brain_value = 50
-
+turningcost_penalty = 20
+blind_angle = 2.6
 
 # New Values
 
 apple_points = 300
 apple_radius = 10
 
-max_apples = 3
+max_apples = nagents * 3
 area_number = 2
 
 area_size = 75
@@ -298,7 +306,6 @@ all_brains = []  # best brain of each generation
 all_positions = []  # to store positions of the best agent of each generation
 all_food_area_positions = []
 all_apples_positions = []
-
 
 inputs = np.zeros(shape=(nagents, 1, in_nodes))
 
@@ -321,6 +328,7 @@ y_ini_nofit = np.array([max_dist])
 metadata = {
     "maxSpeed": max_speed,
     "minSpeed": min_speed,
+    "maxKappa": max_kappa,
     "worldSize": world_length,
     "totalPopulation": nagents,
     "genNb": generations,
@@ -332,7 +340,7 @@ metadata = {
 }
 
 # Get the directory of the current Python file
-current_dir = os.path.dirname(os.path.abspath(__file__))
+current_dir = os.path.dirname(os.path.abspath(r"C:\Users\konst\PycharmProjects\pythonProject\code_basis\results"))
 
 # Construct the path to the folder one directory upwards
 output_dir = os.path.abspath(os.path.join(current_dir, '..', 'simulation_data'))
@@ -374,7 +382,6 @@ for igen in range(generations):
     # to store positions of each apple at each step
     apple_positions = np.ones((nagents, agent_life, area_number, 2)) * -1
       
-
     for iic in range(n_headini):
         #print(iic)
         exploration_mat = np.zeros(shape=(nagents, arena_bins, arena_bins))
@@ -438,16 +445,14 @@ for igen in range(generations):
 
             # calculate distance from this fish to the closest point of each wall
             both_inputs = input_closestwall(x[agents_ingame], y[agents_ingame], headings[agents_ingame], world_length, n_ingame)
-            # normalise and center the inputs (0: distance to closest wall; 1: angle to wall)
-            inputs[agents_ingame, 0, 0] = both_inputs[:, 0] / max_dist
-            inputs[agents_ingame, 0, 1] = (both_inputs[:, 1] % (2 * math.pi)) / (2 * math.pi)
-            inputs[agents_ingame, 0, 2] = is_inside_vectorized(x[agents_ingame], y[agents_ingame], food_area_positions[agents_ingame])
+            
+            inputs[agents_ingame, 0, 0] = is_inside_vectorized(x[agents_ingame], y[agents_ingame], food_area_positions[agents_ingame])
                
             # move / restric calculations to agents_ingame
             temp_h = expit(np.matmul(inputs[agents_ingame, :, :], weights_ih[agents_ingame, :, :]) + bias_h[agents_ingame, :, :])
             temp_o = expit(np.matmul(temp_h, weights_ho[agents_ingame, :, :]) + bias_o[agents_ingame, :, :])
 
-            delta_phi, speed = turn_and_speed(temp_o[:,0 , 0],temp_o[:,0, 1], angle_increment, min_speed, max_speed)
+            delta_phi, speed = turn_and_speed(temp_o[:,0 , 0],max_kappa, temp_o[:,0, 1], angle_increment, min_speed, max_speed)
             headings[agents_ingame] += delta_phi
             x[agents_ingame] += (speed * np.cos(headings[agents_ingame]))
             y[agents_ingame] += (speed * np.sin(headings[agents_ingame]))
@@ -465,7 +470,6 @@ for igen in range(generations):
 
             istep += 1
             n_ingame = agents_ingame.sum()
-
 
         scores += (exploration_mat.sum(axis=1)).sum(axis=1)
 
